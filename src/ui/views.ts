@@ -5,9 +5,10 @@ import type { ViewName } from '../../types'
 
 export type { ViewName }
 
-export const VIEWS: readonly ViewName[] = ['combined', 'tasks', 'code']
+export const VIEWS: readonly ViewName[] = ['plan', 'combined', 'tasks', 'code']
 
 const VIEW_KINDS: Record<ViewName, ReadonlySet<NodeKind>> = {
+  plan: new Set<NodeKind>(['requirement', 'task']),
   combined: new Set<NodeKind>(['agent', 'task', 'file', 'decision', 'requirement']),
   tasks: new Set<NodeKind>(['agent', 'task']),
   code: new Set<NodeKind>(['agent', 'file', 'symbol']),
@@ -27,6 +28,9 @@ export const STATUS_MARK: Record<string, string> = {
   running: '●',
   in_progress: '●',
   pending: '○',
+  planned: '○',
+  active: '●',
+  done: '✓',
   idle: '◌',
   completed: '✓',
   failed: '✕',
@@ -72,7 +76,7 @@ export const edgeLabel = (r: EdgeRow): string => {
       : ''
   const times = r.edge.count > 1 ? ` ×${r.edge.count}` : ''
   const arrow = r.dir === 'out' ? `${edgeGlyph(r.edge)}${r.kind}▶` : `◀${r.kind}${edgeGlyph(r.edge)}`
-  return `${arrow} ${r.other.kind}:${r.other.file ?? r.other.label}${stats}${times}`
+  return `${arrow} ${r.other.kind}:${r.other.file ? displayPath(r.other.file) : r.other.label}${stats}${times}`
 }
 
 export const summary = (g: Graph): string => {
@@ -82,3 +86,10 @@ export const summary = (g: Graph): string => {
 }
 
 export const clampIndex = (i: number, len: number): number => (len === 0 ? 0 : Math.max(0, Math.min(len - 1, i)))
+
+/** Project files stay relative; a path outside the project shows its last two segments. */
+export const displayPath = (file: string): string => {
+  if (!file.startsWith('/')) return file
+  const parts = file.split('/').filter(Boolean)
+  return parts.length <= 2 ? file : `…/${parts.slice(-2).join('/')}`
+}

@@ -7,8 +7,17 @@ TraceGraph is a Claude Code mod. It draws a live graph of the current session in
 - **agents**: the main loop and every subagent it spawns, with the tool each one runs now
 - **tasks**: `TaskCreate` / `TaskUpdate` / `TodoWrite` items, their status and `depends_on` edges
 - **files**: every file an agent reads or writes, with `+added -removed` line counts per write
+- **plan**: before multi-step work, Claude declares the plan as a control block diagram (steps, flow, feedforward, feedback) and reports each step live
 
-All v0.1 edges are **observed** facts from Claude Code tool calls. TraceGraph does not invent dependencies. See [DESIGN.md](DESIGN.md) for the full design and roadmap.
+```text
+         ┌───────────────────────────────┐ test cases
+┌────────┴────────┐   ┌────────┐   ┌─────▼────┐   ┌────────┐
+│ ✓ requirements  │──▶│ ● impl │──▶│ ✕ test   │──▶│ ○ ship │
+└─────────────────┘   └────▲───┘   └─────┬────┘   └────────┘
+                           └─────────────┘ tests fail ×1
+```
+
+Agent, task and file edges are **observed** facts from Claude Code tool calls. Plan blocks and arrows are Claude's own statements (`source: agent`) and are drawn as such. TraceGraph does not invent dependencies. See [DESIGN.md](DESIGN.md) for the full design and roadmap.
 
 > **Early access.** Claude Code function hooks (mods) are an early-access API. They can change between Claude Code releases.
 
@@ -31,7 +40,10 @@ claude --plugin-dir ./tracegraph
 ## Use
 
 ```text
-/graph            combined view
+/graph            plan view if a plan exists, else combined
+/graph plan       control block diagram of the current plan
+/graph combined   everything
+/graph demo       draw a sample plan
 /graph tasks      agents + tasks
 /graph code       agents + files
 ```
@@ -42,9 +54,18 @@ Keys in the pane:
 |---|---|
 | `j` / `k` | next / previous node |
 | `d` | toggle the detail panel (edges, metadata, file path) |
-| `t` / `c` / `g` | tasks / code / combined view |
+| `p` / `t` / `c` / `g` | plan / tasks / code / combined view |
 
 Edge glyphs: `━` observed, `┄` interpreted (reserved for v0.2+).
+
+## Plan tools
+
+TraceGraph gives Claude two tools and a short system prompt note asking it to use them:
+
+| Tool | Purpose |
+|---|---|
+| `mcp__tracegraph__plan` | declare `title`, `steps`, `links` (`flow` / `feedforward` / `feedback`, optional `label`) |
+| `mcp__tracegraph__step` | set a step `active` / `done` / `failed`; `failed` fires its feedback loops (counter `×n`) and reactivates the target step |
 
 ## Storage
 
@@ -70,6 +91,8 @@ Layout:
 hooks/register.tsx       wiring: /graph command, tool.call observer, pane renderer
 src/graph/               model + pure event reducer (replay, JSONL)
 src/observers/tools.ts   tool call → graph events (pure)
+src/observers/plan.ts    plan / step tools → graph events (pure)
+src/ui/diagram.ts        plan → monospace block diagram (pure)
 src/ui/views.ts          view filters and row text (pure)
 types/index.d.ts         type contract ($.state + graph model)
 ```

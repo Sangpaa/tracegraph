@@ -21,6 +21,10 @@ export type EdgeKind =
   | 'motivated_by'
   | 'decided'
   | 'calls'
+  // Plan graph (control block diagram): forward path, skip-ahead path, loop back.
+  | 'flow'
+  | 'feedforward'
+  | 'feedback'
 
 // Observed facts and interpretations must never look the same (DESIGN.md §6).
 export type GraphSource = 'observed' | 'agent' | 'user' | 'static-analysis'
@@ -82,7 +86,7 @@ export type GraphEvent =
   // Agent call) learns the spawned agent's real id.
   | { type: 'node.alias'; at: number; from: string; to: string }
 
-export type ViewName = 'combined' | 'tasks' | 'code'
+export type ViewName = 'plan' | 'combined' | 'tasks' | 'code'
 
 export type PaneUi = {
   view: ViewName
