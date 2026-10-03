@@ -1,0 +1,7 @@
+{
+  "name": "tracegraph",
+  "version": "0.1.0",
+  "description": "Live provenance graph of tasks, agents and files inside a Claude Code pane",
+  "license": "MIT",
+  "types": "./types/index.d.ts"
+}

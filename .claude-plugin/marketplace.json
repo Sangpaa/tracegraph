@@ -1,0 +1,11 @@
+{
+  "name": "tracegraph",
+  "owner": { "name": "Sangpaa" },
+  "plugins": [
+    {
+      "name": "tracegraph",
+      "source": "./",
+      "description": "Live provenance graph of tasks, agents and files inside a Claude Code pane"
+    }
+  ]
+}
